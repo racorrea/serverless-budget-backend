@@ -6,8 +6,46 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs12.x
+  region: us-east-1
+  environment:
+    REGION: ${self:provider.region}
+    INCOME_TABLE: IncomeTable
+  
 
 functions:
   hello:
-    handler: handler.hello
+    handler: src/handler/handler.hello
+    events:
+      - http:
+          path: budget/hello
+          method: get
+          cors: false
+          private: false
+
+  createIncome:
+    handler: src/handler/createIncomeHandler.createIncome
+    events:
+      - http:
+          path: budget/createIncome
+          method: post
+          cors: false
+          private: false
+      
+resources:
+  Resources:
+    IncomeTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        AttributeDefinitions:
+        - AttributeName: "incomeId"
+          AttributeType: "S"
+        KeySchema:
+        - AttributeName: "incomeId"
+          KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.INCOME_TABLE}
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
 
